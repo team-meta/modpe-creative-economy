@@ -1,3 +1,8 @@
+const File_ = java.io.File,
+    PATH = "/sdcard/games/team.meta/creative_economy/";
+
+
+
 Entity.getAll = () => {
     // 고장났다고 전해짐. 고장났는지 확인하고 맞으면 새로 만드셈.
 };
@@ -31,6 +36,15 @@ function Command(params) {
     this._params = params || [];
 }
 
+Command.FLAG_ALL = "@all";
+Command.FLAG_ALL_SHORT = "@a";
+Command.FLAG_ENTITIES = "@entities";
+Command.FLAG_ENTITIES_SHORT = "@e";
+Command.FLAG_PLAYERS = "@players";
+Command.FLAG_PLAYERS_SHORT = "@our";
+Command.FLAG_PLAYER = "@player";
+Command.FLAG_PLATER_SHORT = "@me";
+
 Command.prototype.setParams = function (arr) {
     this._params = arr;
     return this;
@@ -59,20 +73,20 @@ CommandParser.parse = function (str) {
             arr[i] = Server.getPlayerByName(element.substring(1));
         } else if (element[0] === "@") {
             switch (element) {
-            case "@all":
-            case "@a":
+            case Command.FLAG_ALL:
+            case Command.FLAG_ALL_SHORT:
                 arr[i] = Entity.getAll();
                 break;
-            case "@entities":
-            case "@e":
+            case Command.FLAG_ENTITIE:
+            case Command.FLAG_ENTITIES_SHORT:
                 arr[i] = Server.getAllEntities();
                 break;
-            case "@players":
-            case "@our":
+            case Command.FLAG_PLAYERS:
+            case Command.FLAG_PLAYERS_SHORT:
                 arr[i] = Server.getAllPlayers();
                 break;
-            case "@player":
-            case "@me":
+            case Command.FLAG_PLATER:
+            case Command.FLAG_PLATER_SHORT:
                 arr[i] = Server.getPlayer();
             }
         } else if (/^[+-]?\d+(\.\d+)?$/.test(element)) {
@@ -83,6 +97,53 @@ CommandParser.parse = function (str) {
     }
     return new Command(arr);
 };
+
+
+
+function File(path) {
+    this._path = path;
+}
+
+File.read = function (path) {
+    let file = new File_(path);
+    if (file.exists()) {
+        // 파일 읽기 (prototype안 쓴거 오타 아님)
+    } else {
+        File.write(path, "");
+        return "";
+    }
+};
+
+File.write = function (path, str) {
+    // 파일 쓰기
+};
+
+File.prototype.read = function () {
+    return File.read(this._path);
+};
+
+File.prototype.write = function (str) {
+    File.write(this._path, str);
+    return this;
+};
+
+
+
+function PlayerData(entity) {
+    this._entity = entity;
+}
+
+PlayerData.prototype.getEntity = function () {
+    return this._entity;
+};
+
+
+
+function Preference() {
+    this._pref = JSON.parse(File.read(PATH + "pref.json"));
+}
+
+
 
 
 
@@ -98,8 +159,10 @@ Wallet.prototype.getOwner = function () {
 
 Wallet.prototype.setMoney = function (money) {
     this._money = money;
+    return this;
 };
 
 Wallet.prototype.setOwner = function (owner) {
     this._owner = owner;
+    return this;
 };
