@@ -23,9 +23,9 @@ Server.getPlayer = () => {
 };
 
 Server.getPlayerByName = name => {
-    for each (var i in Server.getAllPlayers()){
-        if (Player.getName(i)==name) return i;
-    }
+	Server.getAllPlayers().forEach(i => {
+		if(Player.getName(i) == name) return i;
+	});
 };
 
 
