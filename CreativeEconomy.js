@@ -115,18 +115,18 @@ function File(path) {
 File.read = function (path) {
     let file = new File_(path);
     if (file.exists()) {
-		let fis = new FileInputStream(path),
-			isr = new InputStreamReader(fis),
-			br = new BufferedReader(isr),
-			str = "",
-			read = "";
-		
-		while((read = br.readLine()) != null) {
-			str += read + "\n";
-		}
-		br.close();
-		
-		return str;
+        let fis = new FileInputStream(path),
+            isr = new InputStreamReader(fis),
+            br = new BufferedReader(isr),
+            str = "",
+            read = "";
+        
+        while((read = br.readLine()) != null) {
+            str += read + "\n";
+        }
+        br.close();
+        
+        return str;
     } else {
         File.write(path, "");
         return "";
@@ -134,13 +134,13 @@ File.read = function (path) {
 };
 
 File.write = function (path, str) {
-	let file = new File_(path),
-		fos = new FileOutputStream(path);
-		
-	file.getParentFile().mkdirs();
-	file.createNewFile();
-	fos.write(new java.lang.String(str).getBytes());
-	fos.close();
+    let file = new File_(path),
+        fos = new FileOutputStream(path);
+    
+    file.getParentFile().mkdirs();
+    file.createNewFile();
+    fos.write(new java.lang.String(str).getBytes());
+    fos.close();
 };
 
 File.prototype.read = function () {
