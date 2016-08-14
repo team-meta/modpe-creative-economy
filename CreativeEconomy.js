@@ -60,7 +60,7 @@ Command.FLAG_PLAYERS_SHORT = "@our";
 Command.FLAG_PLAYER = "@player";
 Command.FLAG_PLATER_SHORT = "@me";
 
-Command.prototype.setParams = function(arr) {
+Command.prototype.setParams = function (arr) {
     this._params = arr;
     return this;
 };
@@ -69,7 +69,7 @@ Command.prototype.setParams = function(arr) {
 
 function CommandParser() {}
 
-CommandParser.parse = function(str) {
+CommandParser.parse = function (str) {
     let tmp = [],
         arr;
     str = str.replace(/".*"/g, $1 => {
@@ -88,21 +88,21 @@ CommandParser.parse = function(str) {
             arr[i] = Server.getPlayerByName(element.substring(1));
         } else if (element[0] === "@") {
             switch (element) {
-                case Command.FLAG_ALL:
-                case Command.FLAG_ALL_SHORT:
-                    arr[i] = Entity.getAll();
-                    break;
-                case Command.FLAG_ENTITIE:
-                case Command.FLAG_ENTITIES_SHORT:
-                    arr[i] = Server.getAllEntities();
-                    break;
-                case Command.FLAG_PLAYERS:
-                case Command.FLAG_PLAYERS_SHORT:
-                    arr[i] = Server.getAllPlayers();
-                    break;
-                case Command.FLAG_PLATER:
-                case Command.FLAG_PLATER_SHORT:
-                    arr[i] = Server.getPlayer();
+            case Command.FLAG_ALL:
+            case Command.FLAG_ALL_SHORT:
+                arr[i] = Entity.getAll();
+                break;
+            case Command.FLAG_ENTITIE:
+            case Command.FLAG_ENTITIES_SHORT:
+                arr[i] = Server.getAllEntities();
+                break;
+            case Command.FLAG_PLAYERS:
+            case Command.FLAG_PLAYERS_SHORT:
+                arr[i] = Server.getAllPlayers();
+                break;
+            case Command.FLAG_PLATER:
+            case Command.FLAG_PLATER_SHORT:
+                arr[i] = Server.getPlayer();
             }
         } else if (/^[+-]?\d+(\.\d+)?$/.test(element)) {
             arr[i] = Number(element);
@@ -119,7 +119,7 @@ function File(path) {
     this._path = path;
 }
 
-File.read = function(path) {
+File.read = function (path) {
     let file = new File_(path);
     if (file.exists()) {
         let fis = new FileInputStream_(path),
@@ -140,7 +140,7 @@ File.read = function(path) {
     }
 };
 
-File.write = function(path, str) {
+File.write = function (path, str) {
     let file = new File_(path),
         fos = new FileOutputStream_(path);
 
@@ -149,11 +149,11 @@ File.write = function(path, str) {
     fos.close();
 };
 
-File.prototype.read = function() {
+File.prototype.read = function () {
     return File.read(this._path);
 };
 
-File.prototype.write = function(str) {
+File.prototype.write = function (str) {
     File.write(this._path, str);
     return this;
 };
@@ -164,7 +164,7 @@ function PlayerData(entity) {
     this._entity = entity;
 }
 
-PlayerData.prototype.getEntity = function() {
+PlayerData.prototype.getEntity = function () {
     return this._entity;
 };
 
@@ -178,20 +178,20 @@ function Preference() {
 
 function Wallet() {}
 
-Wallet.prototype.getMoney = function() {
+Wallet.prototype.getMoney = function () {
     return this._money;
 };
 
-Wallet.prototype.getOwner = function() {
+Wallet.prototype.getOwner = function () {
     return this._owner;
 };
 
-Wallet.prototype.setMoney = function(money) {
+Wallet.prototype.setMoney = function (money) {
     this._money = money;
     return this;
 };
 
-Wallet.prototype.setOwner = function(owner) {
+Wallet.prototype.setOwner = function (owner) {
     this._owner = owner;
     return this;
 };
