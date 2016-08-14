@@ -41,7 +41,7 @@ Command.prototype.setParams = function (arr) {
 function CommandParser() {}
 
 CommandParser.parse = function (str) {
-    let tmp = [];
+    let tmp = [],
         arr;
     str = str.replace(/".*"/g, $1 => {
         $1 = $1.substring(1, $1.length - 1);
@@ -49,37 +49,57 @@ CommandParser.parse = function (str) {
         return "@tmp_" + (tmp.length - 1);
     });
     arr = str.split(" ");
-    for (let i = arr.length; i --;) {
+    for (let i = arr.length; i--;) {
         let element = arr[i],
             elements = element.split("_");
         if (elements[0] === "@tmp") {
-             element = tmp[elements[1]];
+            element = tmp[elements[1]];
         }
         if (element[0] === "#") {
-             arr[i] = Server.getPlayerByName(element.substring(1));
+            arr[i] = Server.getPlayerByName(element.substring(1));
         } else if (element[0] === "@") {
-             switch (element) {
-             case "@all":
-             case "@a":
-                 arr[i] = Entity.getAll();
-                 break;
-             case "@entities":
-             case "@e":
-                 arr[i] = Server.getAllEntities();
-                 break;
-             case "@players":
-             case "@our":
-                 arr[i] = Server.getAllPlayers();
-                 break;
-             case "@player":
-             case "@me":
-                 arr[i] = Server.getPlayer();
-             }
-        } else if (/^[+-]?\d+(\.\d+)?$/.test(element) {
-             arr[i] = Number(element);
+            switch (element) {
+            case "@all":
+            case "@a":
+                arr[i] = Entity.getAll();
+                break;
+            case "@entities":
+            case "@e":
+                arr[i] = Server.getAllEntities();
+                break;
+            case "@players":
+            case "@our":
+                arr[i] = Server.getAllPlayers();
+                break;
+            case "@player":
+            case "@me":
+                arr[i] = Server.getPlayer();
+            }
+        } else if (/^[+-]?\d+(\.\d+)?$/.test(element)) {
+            arr[i] = Number(element);
         } else if (element === "false" || element === "true") {
-             arr[i] = Boolean(element);
+            arr[i] = Boolean(element);
         }
     }
     return new Command(arr);
+};
+
+
+
+function Wallet() {}
+
+Wallet.prototype.getMoney = function () {
+    return this._money;
+};
+
+Wallet.prototype.getOwner = function () {
+    return this._owner;
+};
+
+Wallet.prototype.setMoney = function (money) {
+    this._money = money;
+};
+
+Wallet.prototype.setOwner = function (owner) {
+    this._owner = owner;
 };
