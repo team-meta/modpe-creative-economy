@@ -3,25 +3,29 @@ const File_ = java.io.File,
 
 
 
-Entity.getAll = () => {
-    // 고장났다고 전해짐. 고장났는지 확인하고 맞으면 새로 만드셈.
-};
-
 Server.getAllEntities = () => {
-    // 플레이어 빼고 모든 엔티티 반환
+    var ans=[];
+    for each (var i in Entity.getAll()){
+        if (!Player.isPlayer(i)) ans.push(i);
+    }
+    return ans;
 };
 
 Server.getAllPlayers = () => {
-    // 모든 플레이어 반환
+    return Entity.getAll().filter(Player.isPlayer);
 };
 
+var recentTouchedPlayer;
 Server.getPlayer = () => {
     // 가장 최근에 표지판 터치한 사람 반환
     // useItem이랑 잘 연동해보셈
+    return recentTouchedPlayer;
 };
 
 Server.getPlayerByName = name => {
-    // 이름으로 플레이어 엔티티 찾기
+    for each (var i in Server.getAllPlayers()){
+        if (Player.getName(i)==name) return i;
+    }
 };
 
 
@@ -166,3 +170,33 @@ Wallet.prototype.setOwner = function (owner) {
     this._owner = owner;
     return this;
 };
+
+function useItem(x,y,z,i,b){
+	if (Player.isPlayer(Player.getEntity())) add();
+	if (b==63||b==68){
+	    recentTouchedPlayer=Player.getEntity();
+	}
+}
+
+function attackHook(a, v){
+	if (Player.isPlayer(a)) add(a);
+	if (Player.isPlayer(v)) add(v);
+}
+
+function deathHook(m, v){
+	if (Player.isPlayer(m)) add(m);
+	if (Player.isPlayer(v)) add(v);
+}
+
+function entityHurtHook(a,v,h){
+	if (Player.isPlayer(a)) add(a);
+	if (Player.isPlayer(v)) add(v);
+}
+
+function add(player){
+	if (Entity.getAll().indexOf(player)!=-1){
+		net.zhuoweizhang.mcpelauncher.ScriptManager.allentities.add(java.lang.Long(player));
+		net.zhuoweizhang.mcpelauncher.ScriptManager.allplayers.add(java.lang.Long(player));
+		net.zhuoweizhang.mcpelauncher.ScriptManager.callScriptMethod("entityAddedHook", [player]);
+	}
+}
