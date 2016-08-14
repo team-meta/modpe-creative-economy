@@ -153,6 +153,8 @@ function Preference() {
 
 function Wallet() {}
 
+Wallet.prototype._log = [];
+
 Wallet.prototype.getMoney = function () {
     return this._money;
 };
@@ -161,14 +163,20 @@ Wallet.prototype.getOwner = function () {
     return this._owner;
 };
 
-Wallet.prototype.setMoney = function (money) {
+Wallet.prototype.setMoney = function (money, reason) {
+    var lastMoney = this._money;
     this._money = money;
+    this._log.push({reason: reason, lastMoney: lastMoney, nowMoney: money, owner: Wallet.prototype.getOwner(), ownerName: (owner == undefined) ? undefined : Player.getName(owner)});
     return this;
 };
 
 Wallet.prototype.setOwner = function (owner) {
     this._owner = owner;
     return this;
+};
+
+Wallet.prototype.getLog = function (owner) {
+    return this._log;
 };
 
 function useItem(x,y,z,i,b){
