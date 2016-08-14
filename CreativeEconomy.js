@@ -60,6 +60,13 @@ Command.FLAG_PLAYERS_SHORT = "@our";
 Command.FLAG_PLAYER = "@player";
 Command.FLAG_PLATER_SHORT = "@me";
 
+Command.prototype.run = function () {
+    let params = this._params;
+    if (params[i] in CommandList) {
+        CommandList[params[i]](params.splice(1));
+    }
+};
+
 Command.prototype.setParams = function (arr) {
     this._params = arr;
     return this;
@@ -67,7 +74,22 @@ Command.prototype.setParams = function (arr) {
 
 
 
+const CommandList = {
+    help(page) {
+        showMessage(["Hello world", "Hello", "World"][page || 1]);
+    },
+    info() {
+        showMessage("Creative Economy Beta!");
+    }
+};
+
+
+
 function CommandParser() {}
+
+CommandParser.isValid = function (str) {
+    return str.substring(0, 7) === "@Command";
+};
 
 CommandParser.parse = function (str) {
     let tmp = [],
@@ -176,7 +198,22 @@ function Preference() {
 
 
 
-function Wallet() {}
+function Wallet() {
+    this._log = new WalletLog();
+}
+
+Wallet.prototype.addMoney = function (money) {
+    this._log.add({
+        type: WalletLog.ADD_MONEY,
+        value: money
+    });
+    this._money += money;
+    return this;
+};
+
+Wallet.prototype.getLog = function () {
+    return this._log;
+};
 
 Wallet.prototype.getMoney = function () {
     return this._money;
@@ -186,7 +223,16 @@ Wallet.prototype.getOwner = function () {
     return this._owner;
 };
 
+Wallet.prototype.setLog = functuon(log) {
+    this._log = log;
+    return this;
+};
+
 Wallet.prototype.setMoney = function (money) {
+    this._log.add({
+        type: WalletLog.SET_MONEY,
+        value: money
+    });
     this._money = money;
     return this;
 };
@@ -194,6 +240,57 @@ Wallet.prototype.setMoney = function (money) {
 Wallet.prototype.setOwner = function (owner) {
     this._owner = owner;
     return this;
+};
+
+Wallet.prototype.subtractMoney = function (money) {
+    this._log.add({
+        type: WalletLog.SUBTRACT_MONEY,
+        value: money
+    });
+    this._money += money;
+    return this;
+};
+
+
+
+function WalletLog() {
+    this._log = [];
+}
+
+WalletLog.ADD_MONEY = 0;
+WalletLog.SET_MONEY = 1;
+WalletLog.SUBTRACT_MONEY = 2;
+
+WalletLog.prototype.add = function (log) {
+    this._log.push(log);
+};
+
+WalletLog.prototype.get = function (index) {
+    return this._log[index];
+};
+
+WalletLog.prototype.getAll = function () {
+    return this._log;
+};
+
+WalletLog.prototype.toJSON = function () {
+    return JSON.stringify(this._log);
+};
+
+WalletLog.prototype.toString = function () {
+    let logs = this._log,
+        arr = [];
+    for (let i = 0, len = logs.length; i < len; i++) {
+        let log = logs[i];
+        if (log.type === WalletLog.ADD_MONEY) {
+            arr.push("add: " + log.value);
+        } else if (log.type === WalletLog.SET_MONEY) {
+            arr.push("set: " + log.value);
+        } else if (log.type === WalletLog.SUBTRACT_MONEY) {
+            arr.push("subtract: " + log.value);
+        }
+    }
+    return arr.join("\n");
 };
 
 
@@ -204,6 +301,7 @@ function useItem(x, y, z, itemid, blockid) {
 
     if (blockid == 63 || blockid == 68) {
         recentTouchedPlayer = playetEntity;
+        commandHook();
     }
 }
 
@@ -222,10 +320,24 @@ function entityHurtHook(attacker, victim) {
     addPlayer(victim);
 }
 
+function commandHook(str) {
+    if (CommandParser.isValid(str)) {
+        str = str.substring(8);
+        let cmds = str.split(/\s*&\s*/);
+        for (let i = 0, len = cmds.length; i < len; i++) {
+            CommandParser.parse(cmds[i]).run();
+        }
+    }
+}
+
 function addPlayer(player) {
     if (Player.isPlayer(player) && Entity.getAll().indexOf(player) !== -1) {
         ScriptManager_.allentities.add(Long_(player));
         ScriptManager_.allplayers.add(Long_(player));
         ScriptManager_.callScriptMethod("entityAddedHook", [player]);
     }
+}
+
+function showMessage(str) {
+    // 서버원에게 메세지를 보여줄 수 있는 방법에 대해 고려해보기
 }
