@@ -1,5 +1,9 @@
 const File_ = java.io.File,
-    PATH = "/sdcard/games/team.meta/creative_economy/";
+    PATH = "/sdcard/games/team.meta/creative_economy/",
+	FileOutputStream = java.io.FileOutputStream,
+	FileInputStream = java.io.FileInputStream,
+	InputStreamReader = java.io.InputStreamReader,
+	BufferedReader = java.io.BufferedReader;
 
 
 
@@ -111,7 +115,18 @@ function File(path) {
 File.read = function (path) {
     let file = new File_(path);
     if (file.exists()) {
-        // 파일 읽기 (prototype안 쓴거 오타 아님)
+		let fis = new FileInputStream(path),
+			isr = new InputStreamReader(fis),
+			br = new BufferedReader(isr),
+			str = "",
+			read = "";
+		
+		while((read = br.readLine()) != null) {
+			str += read + "\n";
+		}
+		br.close();
+		
+		return str;
     } else {
         File.write(path, "");
         return "";
@@ -119,7 +134,13 @@ File.read = function (path) {
 };
 
 File.write = function (path, str) {
-    // 파일 쓰기
+	let file = new File_(path),
+		fos = new FileOutputStream(path);
+		
+	file.getParentFile().mkdirs();
+	file.createNewFile();
+	fos.write(new java.lang.String(str).getBytes());
+	fos.close();
 };
 
 File.prototype.read = function () {
@@ -153,8 +174,6 @@ function Preference() {
 
 function Wallet() {}
 
-Wallet.prototype._log = [];
-
 Wallet.prototype.getMoney = function () {
     return this._money;
 };
@@ -163,20 +182,14 @@ Wallet.prototype.getOwner = function () {
     return this._owner;
 };
 
-Wallet.prototype.setMoney = function (money, reason) {
-    var lastMoney = this._money;
+Wallet.prototype.setMoney = function (money) {
     this._money = money;
-    this._log.push({reason: reason, lastMoney: lastMoney, nowMoney: money, owner: Wallet.prototype.getOwner(), ownerName: (owner == undefined) ? undefined : Player.getName(owner)});
     return this;
 };
 
 Wallet.prototype.setOwner = function (owner) {
     this._owner = owner;
     return this;
-};
-
-Wallet.prototype.getLog = function (owner) {
-    return this._log;
 };
 
 function useItem(x,y,z,i,b){
