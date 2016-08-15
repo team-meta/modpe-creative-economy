@@ -13,7 +13,6 @@ const BufferedReader_ = java.io.BufferedReader,
 let recentTouchedPlayer = null;
 
 
-
 Server.getAllEntities = () => {
     return Entity.getAll.filter(element => {
         return !Player.isPlayer(element);
@@ -47,8 +46,9 @@ function Bank() {
 
 
 
-function Command(params) {
+function Command(player, params) {
     this._params = params || [];
+    this._player = player;
 }
 
 Command.FLAG_ALL = "@all";
@@ -63,7 +63,7 @@ Command.FLAG_PLATER_SHORT = "@me";
 Command.prototype.run = function () {
     let params = this._params;
     if (params[i] in CommandList) {
-        CommandList[params[i]](params.splice(1));
+        CommandList[params[i]](params.splice(1), player);
     }
 };
 
@@ -75,11 +75,11 @@ Command.prototype.setParams = function (arr) {
 
 
 const CommandList = {
-    help(page) {
-        showMessage(["Hello world", "Hello", "World"][page || 1]);
+    help(page, player) {
+        showMessage(player, ["Hello world", "Hello", "World"][page || 1]);
     },
-    info() {
-        showMessage("Creative Economy Beta!");
+    info(player) {
+        showMessage(player, "Creative Economy Beta!");
     }
 };
 
@@ -91,7 +91,7 @@ CommandParser.isValid = function (str) {
     return str.substring(0, 7) === "@Command";
 };
 
-CommandParser.parse = function (str) {
+CommandParser.parse = function (player, str) {
     let tmp = [],
         arr;
     str = str.replace(/".*"/g, $1 => {
@@ -132,7 +132,7 @@ CommandParser.parse = function (str) {
             arr[i] = Boolean(element);
         }
     }
-    return new Command(arr);
+    return new Command(player, arr);
 };
 
 
@@ -202,10 +202,12 @@ function Wallet() {
     this._log = new WalletLog();
 }
 
-Wallet.prototype.addMoney = function (money) {
+Wallet.prototype.addMoney = function (money, reason) {
     this._log.add({
         type: WalletLog.ADD_MONEY,
-        value: money
+        lastValue: this._money,
+        value: money,
+        reason: reason
     });
     this._money += money;
     return this;
@@ -228,10 +230,12 @@ Wallet.prototype.setLog = functuon(log) {
     return this;
 };
 
-Wallet.prototype.setMoney = function (money) {
+Wallet.prototype.setMoney = function (money, reason) {
     this._log.add({
         type: WalletLog.SET_MONEY,
-        value: money
+        lastValue: this._money,
+        value: money,
+        reason: reason
     });
     this._money = money;
     return this;
@@ -242,12 +246,14 @@ Wallet.prototype.setOwner = function (owner) {
     return this;
 };
 
-Wallet.prototype.subtractMoney = function (money) {
+Wallet.prototype.subtractMoney = function (money, reason) {
     this._log.add({
         type: WalletLog.SUBTRACT_MONEY,
-        value: money
+        lastValue: this._money,
+        value: money,
+        reason: reason
     });
-    this._money += money;
+    this._money -= money;
     return this;
 };
 
@@ -283,11 +289,11 @@ WalletLog.prototype.toString = function () {
     for (let i = 0, len = logs.length; i < len; i++) {
         let log = logs[i];
         if (log.type === WalletLog.ADD_MONEY) {
-            arr.push("add: " + log.value);
+            arr.push("add: " + log.lastValue + "->" + (log.lastValue + log.value) + ". reason: " + (log.reason == undefined) ? "" : log.reason);
         } else if (log.type === WalletLog.SET_MONEY) {
-            arr.push("set: " + log.value);
+            arr.push("set: " + log.lastValue + "->" + log.value + ". reason: " + (log.reason == undefined) ? "" : log.reason);
         } else if (log.type === WalletLog.SUBTRACT_MONEY) {
-            arr.push("subtract: " + log.value);
+            arr.push("subtract: " + log.lastValue + "->" + (log.lastValue - log.value) + ". reason: " + (log.reason == undefined) ? "" : log.reason);
         }
     }
     return arr.join("\n");
@@ -301,7 +307,7 @@ function useItem(x, y, z, itemid, blockid) {
 
     if (blockid == 63 || blockid == 68) {
         recentTouchedPlayer = playetEntity;
-        commandHook();
+        commandHook(Player.getEntity(), Level.getSignText(x,y,z,0));
     }
 }
 
@@ -320,12 +326,12 @@ function entityHurtHook(attacker, victim) {
     addPlayer(victim);
 }
 
-function commandHook(str) {
+function commandHook(player, str) {
     if (CommandParser.isValid(str)) {
         str = str.substring(8);
         let cmds = str.split(/\s*&\s*/);
         for (let i = 0, len = cmds.length; i < len; i++) {
-            CommandParser.parse(cmds[i]).run();
+            CommandParser.parse(player, cmds[i]).run();
         }
     }
 }
@@ -338,6 +344,16 @@ function addPlayer(player) {
     }
 }
 
-function showMessage(str) {
+function showMessage(player, str) {
     // 서버원에게 메세지를 보여줄 수 있는 방법에 대해 고려해보기
+    let yaw = Entity.getYaw(player)*Math.PI/180;
+    let pitch = Entity.getPitch(player)*Math.PI/180;
+    let sin = -Math.sin(yaw);
+    let cos = Math.cos(yaw);
+    var MessageEntity = Level.spawnMob(Entity.getX(player)+1.5*sin,Entity.getY(player),Entity.getZ(player)+1.5*cos,64);
+    Entity.setNameTag(MessageEntity, str);
+    new java.lang.Thread({run:function(){
+        java.lang.Thread.sleep(10000);
+        Entity.remove(MessageEntity);
+    }}).start();
 }
