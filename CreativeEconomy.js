@@ -57,7 +57,7 @@ function Bank(owner, type) { // 마크 1일 = 20분이니 한 달은 600분 = 10
                 this.refresh();        
             }    
         }
-    }).start();
+    }}).start();
 }
 
 Bank.TYPE_DAY = 1200000;
@@ -531,7 +531,7 @@ function useItem(x, y, z, itemid, blockid) {
         commandHook(Level.getSignText(x, y, z, 0) + Level.getSignText(x, y, z, 1) + Level.getSignText(x, y, z, 2) + Level.getSignText(x, y, z, 3));
     }
 
-    if (system instanceof System && !system.canSetBlock(x, z)) {
+    if (system instanceof System && !system.canSetBlock(x, z, playerEntity)) {
         preventDefault();
     }
 }
