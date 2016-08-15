@@ -15,7 +15,8 @@ const BufferedReader_ = java.io.BufferedReader,
 
 let recentTouchedPlayer = null;
 
-
+let system = new System();
+system.init();
 
 Server.getAllEntities = () => {
     return Entity.getAll.filter(element => {
@@ -44,11 +45,47 @@ Server.getPlayerByName = name => {
 
 
 
-function Bank() {
-
+function Bank(owner, type) { // 마크 1일 = 20분이니 한 달은 600분 = 10시간, 1년은 10 * 12 = 120시간 = 5일.
+    this._time = java.lang.System.currentTimeMillis();
+    this._type = type || Bank.TYPE_MONTH;
+    this._owner = owner;
+    this._money = 0;
+    this._thread = new Thread({run : function(){
+        while (true){
+            Thread.sleep(60000);
+            this.refresh();
+        }
+    }})
 }
 
+Bank.TYPE_DAY = 1200000;
+Bank.TYPE_MONTH = 36000000;
+Bank.TYPE_YEAR = 432000000;
 
+Bank.prototype.refresh = function () {
+    let now = java.lang.System.currentTimeMillis();
+    if (now - this._time > this._type) {
+        this.money *= Math.pow(1.05, Math.floor((now - this._time)/this._type));
+    }
+}
+
+Bank.prototype.addMoney = function (money) {
+    let wallet = system._players[owner].getWallet();
+    if (wallet.getMoney() < money) return false;
+    wallet.subtractMoney(money, "은행 입금");
+    this._money += money;
+}
+
+Bank.prototype.subtractMoney = function (money) {
+    let wallet = system._players[owner].getWallet();
+    if (this._money < money) return false;
+    this._money -= money;
+    wallet.addMoney(money, "은행 출금");
+}
+
+Bank.prototype.getOwner = function () {
+    return this._owner;
+}
 
 function Command(params) {
     this._params = params || [];
@@ -198,13 +235,13 @@ PlayerData.prototype.getWallet = function () {
     return this._wallet;
 };
 
-PlayerData.prototype.giveMoney = function (money) {
-    this._wallet.addMoney(money, "give");
+PlayerData.prototype.giveMoney = function (money, reason) {
+    this._wallet.addMoney(money, reason || "give");
     return this;
 };
 
-PlayerData.prototype.payMoney = function (money) {
-    this._wallet.subtractMoney(money, "pay");
+PlayerData.prototype.payMoney = function (money, reason) {
+    this._wallet.subtractMoney(money, reason || "pay");
     return this;
 };
 
