@@ -13,10 +13,10 @@ const BufferedReader_ = java.io.BufferedReader,
 
 
 
-let recentTouchedPlayer = null;
+let system,
+    recentTouchedPlayer = null;
 
-let system = new System();
-system.init();
+
 
 Server.getAllEntities = () => {
     return Entity.getAll.filter(element => {
@@ -44,48 +44,61 @@ Server.getPlayerByName = name => {
 };
 
 
-
 function Bank(owner, type) { // 마크 1일 = 20분이니 한 달은 600분 = 10시간, 1년은 10 * 12 = 120시간 = 5일.
-    this._time = java.lang.System.currentTimeMillis();
-    this._type = type || Bank.TYPE_MONTH;
-    this._owner = owner;
-    this._money = 0;
-    this._thread = new Thread({run : function(){
-        while (true){
-            Thread.sleep(60000);
-            this.refresh();
+        
+    this._time = java.lang.System.currentTimeMillis();    
+    this._type = type || Bank.TYPE_MONTH;    
+    this._owner = owner || null;    
+    this._money = 0;    
+    this._thread = new Thread_({
+        run() {        
+            while (true) {            
+                Thread_.sleep(60000);            
+                this.refresh();        
+            }    
         }
-    }})
+    }).start();
 }
 
 Bank.TYPE_DAY = 1200000;
 Bank.TYPE_MONTH = 36000000;
 Bank.TYPE_YEAR = 432000000;
 
-Bank.prototype.refresh = function () {
-    let now = java.lang.System.currentTimeMillis();
-    if (now - this._time > this._type) {
-        this.money *= Math.pow(1.05, Math.floor((now - this._time)/this._type));
+Bank.prototype.refresh = function () {    
+    let now = java.lang.System.currentTimeMillis();    
+    if (now - this._time > this._type) {        
+        this.money *= Math.pow(1.05, Math.floor((now - this._time) / this._type));    
     }
-}
+};
 
-Bank.prototype.addMoney = function (money) {
-    let wallet = system._players[owner].getWallet();
-    if (wallet.getMoney() < money) return false;
-    wallet.subtractMoney(money, "은행 입금");
+Bank.prototype.addMoney = function (money) {    
+    let wallet = system._players[owner].getWallet();    
+    if (wallet.getMoney() < money) {
+        return false;
+    }    
+    wallet.subtractMoney(money, "은행 입금");    
     this._money += money;
-}
+};
 
-Bank.prototype.subtractMoney = function (money) {
-    let wallet = system._players[owner].getWallet();
-    if (this._money < money) return false;
-    this._money -= money;
+Bank.prototype.subtractMoney = function (money) {    
+    let wallet = system._players[owner].getWallet();    
+    if (this._money < money) {
+        return false;
+    }    
+    this._money -= money;    
     wallet.addMoney(money, "은행 출금");
-}
+};
 
-Bank.prototype.getOwner = function () {
+Bank.prototype.getOwner = function () {    
     return this._owner;
-}
+};
+
+Bank.prototype.setOwner = function (owner) {   
+    this._owner = owner;
+    return this;
+};
+
+
 
 function Command(params) {
     this._params = params || [];
@@ -170,6 +183,8 @@ CommandParser.parse = function (str) {
             arr[i] = Number(element);
         } else if (element === "false" || element === "true") {
             arr[i] = Boolean(element);
+        } else if (element === ".") {
+            arr[i] = null;
         }
     }
     return new Command(arr);
@@ -224,11 +239,36 @@ File.prototype.write = function (str) {
 
 function PlayerData(entity) {
     this._entity = entity;
+    this._territories = [];
     this._wallet = new Wallet(entity);
 }
 
+PlayerData.prototype.addTerritory = function (territory) {
+    this._territories.push(territory);
+    return this;
+};
+
+PlayerData.prototype.deleteTerritory = function (territory) {
+    let territories = this._territories,
+        point1 = territory.getPoint1(),
+        point2 = territory.getPoint2();
+    for (let i = territories.length; i--;) {
+        let territory_ = territories[i],
+            point1_ = territory_.getPoint1(),
+            point2_ = territory_.getPoint2();
+        if (point1[0] === point1_[0] && point1[1] === point1_[1] && point1[2] === point1_[2] && point2[0] === point2_[0] && point2[1] === point2_[1] && point2[2] === point2_[2]) {
+            territories.splice(i, 1);
+        }
+    }
+    return this;
+};
+
 PlayerData.prototype.getEntity = function () {
     return this._entity;
+};
+
+PlayerData.prototype.getTerritories = function () {
+    return this._territories;
 };
 
 PlayerData.prototype.getWallet = function () {
@@ -247,6 +287,11 @@ PlayerData.prototype.payMoney = function (money, reason) {
 
 PlayerData.prototype.setEntity = function (entity) {
     this._entity = entity;
+    return this;
+};
+
+PlayerData.prototype.setTerritories = function (territories) {
+    this._territories = territories;
     return this;
 };
 
@@ -281,6 +326,19 @@ System.prototype.add = function (player) {
     if (!(uuid in players)) {
         players[uuid] = new PlayerData(player);
     }
+};
+
+System.prototype.canSetBlock = function (x, z, playerEntity) {
+    let players = this._players;
+    for (let i = 0, len = players.length; i < len; i++) {
+        let territories = players[i].getTerritories();
+        for (let j = 0, len = territories.length; j < len; j++) {
+            if (!territories[i].isOwner(playerEntity) && territories[i].isInvaded(x, z)) {
+                return false;
+            }
+        }
+    }
+    return true;
 };
 
 System.prototype.init = function () {
@@ -342,6 +400,20 @@ System.prototype.stop = function () {
 
 
 
+function Territory(owner) {
+    this._owner = owner || null;
+}
+
+Territory.prototype.isInvaded = function (x, z) {
+
+};
+
+Territory.prototype.isOwner = function (entity) {
+    return this._owner === entity;
+};
+
+
+
 function Wallet(owner, money) {
     this._log = new WalletLog();
     this._money = money || 0;
@@ -369,6 +441,10 @@ Wallet.prototype.getMoney = function () {
 
 Wallet.prototype.getOwner = function () {
     return this._owner;
+};
+
+Wallet.prototype.isOwner = function (entity) {
+    return this._owner === entity;
 };
 
 Wallet.prototype.setLog = functuon(log) {
@@ -454,6 +530,10 @@ function useItem(x, y, z, itemid, blockid) {
     if (blockid == 63 || blockid == 68) {
         commandHook(Level.getSignText(x, y, z, 0) + Level.getSignText(x, y, z, 1) + Level.getSignText(x, y, z, 2) + Level.getSignText(x, y, z, 3));
     }
+
+    if (system instanceof System && !system.canSetBlock(x, z)) {
+        preventDefault();
+    }
 }
 
 function attackHook(attacker, victim) {
@@ -480,6 +560,11 @@ function commandHook(str) {
             CommandParser.parse(cmds[i]).run();
         }
     }
+}
+
+function init() {
+    system = new System();
+    system.init();
 }
 
 function addPlayer(player) {
