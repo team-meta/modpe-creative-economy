@@ -65,7 +65,7 @@ Bank.TYPE_MONTH = 36000000;
 Bank.TYPE_YEAR = 432000000;
 
 Bank.prototype.deposit = function (money) {    
-    let wallet = system._players[owner].getWallet();    
+    let wallet = system.getPlayerByEntity(owner).getWallet();    
     if (wallet.getMoney() < money) {
         return false;
     }    
@@ -90,7 +90,7 @@ Bank.prototype.setOwner = function (owner) {   
 };
 
 Bank.prototype.withdraw = function (money) {    
-    let wallet = system._players[owner].getWallet();    
+    let wallet = system.getPlayerByEntity(owner).getWallet();    
     if (this._money < money) {
         return false;
     }    
@@ -341,6 +341,17 @@ System.prototype.canSetBlock = function (x, z, playerEntity) {
     return true;
 };
 
+System.prototype.getPlayerByEntity = function (entity) {
+    let players = this._players;
+    for (let i = 0, len = players.length; i < len; i++) {
+        let playerData = players[i];
+        if (playerData.getEntity() === entity) {
+            return playerData;
+        }
+    }
+    return null;
+};
+
 System.prototype.init = function () {
     let thiz = this,
         players = this._players = {},
@@ -420,7 +431,7 @@ Territory.prototype.getPoint2 = function () {
 };
 
 Territory.prototype.isInvaded = function (x, z) {
-    // x, y가 영토안에 들어왔는지 체크
+    // x, z가 영토안에 들어왔는지 체크
     // 누가 만드셈
 };
 
