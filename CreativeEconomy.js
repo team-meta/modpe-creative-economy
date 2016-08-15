@@ -5,12 +5,15 @@ const BufferedReader_ = java.io.BufferedReader,
     InputStreamReader_ = java.io.InputStreamReader,
     Long_ = java.lang.Long,
     String_ = java.lang.String,
+    Thread_ = java.lang.Thread,
     ScriptManager_ = net.zhuoweizhang.mcpelauncher.ScriptManager,
-    PATH = "/sdcard/games/team.meta/creative_economy/";
+    PATH = "/sdcard/games/team.meta/creative_economy/",
+    RADIAN = 0.017;
 
 
 
 let recentTouchedPlayer = null;
+
 
 
 Server.getAllEntities = () => {
@@ -46,9 +49,8 @@ function Bank() {
 
 
 
-function Command(player, params) {
+function Command(params) {
     this._params = params || [];
-    this._player = player;
 }
 
 Command.FLAG_ALL = "@all";
@@ -63,7 +65,7 @@ Command.FLAG_PLATER_SHORT = "@me";
 Command.prototype.run = function () {
     let params = this._params;
     if (params[i] in CommandList) {
-        CommandList[params[i]](params.splice(1), player);
+        CommandList[params[i]](...params.splice(1));
     }
 };
 
@@ -75,11 +77,11 @@ Command.prototype.setParams = function (arr) {
 
 
 const CommandList = {
-    help(page, player) {
+    help(page) {
         showMessage(player, ["Hello world", "Hello", "World"][page || 1]);
     },
-    info(player) {
-        showMessage(player, "Creative Economy Beta!");
+    info() {
+        showMessage("Creative Economy Beta!");
     }
 };
 
@@ -91,7 +93,7 @@ CommandParser.isValid = function (str) {
     return str.substring(0, 7) === "@Command";
 };
 
-CommandParser.parse = function (player, str) {
+CommandParser.parse = function (str) {
     let tmp = [],
         arr;
     str = str.replace(/".*"/g, $1 => {
@@ -132,7 +134,7 @@ CommandParser.parse = function (player, str) {
             arr[i] = Boolean(element);
         }
     }
-    return new Command(player, arr);
+    return new Command(arr);
 };
 
 
@@ -306,8 +308,7 @@ function useItem(x, y, z, itemid, blockid) {
     addPlayer(playerEntity);
 
     if (blockid == 63 || blockid == 68) {
-        recentTouchedPlayer = playetEntity;
-        commandHook(Player.getEntity(), Level.getSignText(x,y,z,0));
+        commandHook(Level.getSignText(x, y, z, 0) + Level.getSignText(x, y, z, 1) + Level.getSignText(x, y, z, 2) + Level.getSignText(x, y, z, 3));
     }
 }
 
@@ -326,12 +327,13 @@ function entityHurtHook(attacker, victim) {
     addPlayer(victim);
 }
 
-function commandHook(player, str) {
+function commandHook(str) {
     if (CommandParser.isValid(str)) {
+        recentTouchedPlayer = playetEntity;
         str = str.substring(8);
         let cmds = str.split(/\s*&\s*/);
         for (let i = 0, len = cmds.length; i < len; i++) {
-            CommandParser.parse(player, cmds[i]).run();
+            CommandParser.parse(cmds[i]).run();
         }
     }
 }
@@ -344,16 +346,15 @@ function addPlayer(player) {
     }
 }
 
-function showMessage(player, str) {
-    // 서버원에게 메세지를 보여줄 수 있는 방법에 대해 고려해보기
-    let yaw = Entity.getYaw(player)*Math.PI/180;
-    let pitch = Entity.getPitch(player)*Math.PI/180;
-    let sin = -Math.sin(yaw);
-    let cos = Math.cos(yaw);
-    var MessageEntity = Level.spawnMob(Entity.getX(player)+1.5*sin,Entity.getY(player),Entity.getZ(player)+1.5*cos,64);
-    Entity.setNameTag(MessageEntity, str);
-    new java.lang.Thread({run:function(){
-        java.lang.Thread.sleep(10000);
-        Entity.remove(MessageEntity);
-    }}).start();
+function showMessage(str) {
+    let playerEntity = Server.getPlayer(),
+        yaw = Entity.getYaw(playerEntity) * RADIAN,
+        entity = Level.spawnMob(Entity.getX(playerEntity) + 1.5 * -Math.sin(yaw), Entity.getY(playerEntity), Entity.getZ(playerEntity) + 1.5 * Math.cos(yaw), 64);
+    Entity.setNameTag(entity, str);
+    new Thread_({
+        run() {
+            Thread_.sleep(10000);
+            Entity.remove(entity);
+        }
+    }).start();
 }
