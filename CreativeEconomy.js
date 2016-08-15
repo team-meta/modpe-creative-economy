@@ -78,7 +78,7 @@ Command.prototype.setParams = function (arr) {
 
 const CommandList = {
     help(page) {
-        showMessage(player, ["Hello world", "Hello", "World"][page || 1]);
+        showMessage(["Hello world", "Hello", "World"][page || 1]);
     },
     info() {
         showMessage("Creative Economy Beta!");
@@ -209,7 +209,7 @@ Wallet.prototype.addMoney = function (money, reason) {
         type: WalletLog.ADD_MONEY,
         lastValue: this._money,
         value: money,
-        reason: reason
+        reason: reason || "None"
     });
     this._money += money;
     return this;
@@ -237,7 +237,7 @@ Wallet.prototype.setMoney = function (money, reason) {
         type: WalletLog.SET_MONEY,
         lastValue: this._money,
         value: money,
-        reason: reason
+        reason: reason || "None"
     });
     this._money = money;
     return this;
@@ -253,7 +253,7 @@ Wallet.prototype.subtractMoney = function (money, reason) {
         type: WalletLog.SUBTRACT_MONEY,
         lastValue: this._money,
         value: money,
-        reason: reason
+        reason: reason || "None"
     });
     this._money -= money;
     return this;
@@ -291,11 +291,11 @@ WalletLog.prototype.toString = function () {
     for (let i = 0, len = logs.length; i < len; i++) {
         let log = logs[i];
         if (log.type === WalletLog.ADD_MONEY) {
-            arr.push("add: " + log.lastValue + "->" + (log.lastValue + log.value) + ". reason: " + (log.reason == undefined) ? "" : log.reason);
+            arr.push("add: " + log.lastValue + "->" + (log.lastValue + log.value) + " / reason: " + log.reason);
         } else if (log.type === WalletLog.SET_MONEY) {
-            arr.push("set: " + log.lastValue + "->" + log.value + ". reason: " + (log.reason == undefined) ? "" : log.reason);
+            arr.push("set: " + log.lastValue + "->" + log.value + " / reason: " + log.reason);
         } else if (log.type === WalletLog.SUBTRACT_MONEY) {
-            arr.push("subtract: " + log.lastValue + "->" + (log.lastValue - log.value) + ". reason: " + (log.reason == undefined) ? "" : log.reason);
+            arr.push("subtract: " + log.lastValue + "->" + (log.lastValue - log.value) + " / reason: " + log.reason);
         }
     }
     return arr.join("\n");
