@@ -198,6 +198,16 @@ PlayerData.prototype.getWallet = function () {
     return this._wallet;
 };
 
+PlayerData.prototype.giveMoney = function (money) {
+    this._wallet.addMoney(money, "give");
+    return this;
+};
+
+PlayerData.prototype.payMoney = function (money) {
+    this._wallet.subtractMoney(money, "pay");
+    return this;
+};
+
 PlayerData.prototype.setEntity = function (entity) {
     this._entity = entity;
     return this;
