@@ -209,7 +209,11 @@ PlayerData.prototype.setWallet = function (wallet) {
 };
 
 PlayerData.prototype.toJSON = function () {
-
+    return JSON.stringify({
+        wallet: {
+            money: this._wallet.getMoney()
+        }
+    })
 };
 
 
