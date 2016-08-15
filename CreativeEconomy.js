@@ -8,6 +8,7 @@ const BufferedReader_ = java.io.BufferedReader,
     Thread_ = java.lang.Thread,
     ScriptManager_ = net.zhuoweizhang.mcpelauncher.ScriptManager,
     PATH = "/sdcard/games/team.meta/creative_economy/",
+    PLAYERS_PATH = "/sdcard/games/team.meta/creative_economy/players/",
     RADIAN = 0.017;
 
 
@@ -186,10 +187,29 @@ File.prototype.write = function (str) {
 
 function PlayerData(entity) {
     this._entity = entity;
+    this._wallet = new Wallet(entity);
 }
 
 PlayerData.prototype.getEntity = function () {
     return this._entity;
+};
+
+PlayerData.prototype.getWallet = function () {
+    return this._wallet;
+};
+
+PlayerData.prototype.setEntity = function (entity) {
+    this._entity = entity;
+    return this;
+};
+
+PlayerData.prototype.setWallet = function (wallet) {
+    this._wallet = wallet;
+    return this;
+};
+
+PlayerData.prototype.toJSON = function () {
+
 };
 
 
@@ -200,8 +220,81 @@ function Preference() {
 
 
 
-function Wallet() {
+function System() {
+    this._isRunning = false;
+}
+
+System.prototype.add = function (player) {
+    let players = this._players,
+        uuid = Entity.getUniqueId(player);
+    if (!(uuid in players)) {
+        players[uuid] = new PlayerData(player);
+    }
+};
+
+System.prototype.init = function () {
+    let thiz = this,
+        players = this._players = {},
+        players_ = Server.getAllPlayers();
+    for (let i = 0, len = players_.length; i < len; i++) {
+        let player = players_[i],
+            playerData = new PlayerData(player),
+            uuid = Entity.getUniqueId(player),
+            file = new File_(PLAYERS_PATH + uuid);
+        if (file.exists()) {
+            let obj = JSON.parse(File.read(file.getPath()));
+            playerData.getWallet().setMoney(obj.wallet.money, "init");
+        }
+        players[uuid] = playerData;
+    }
+    this._isRunning = true;
+    new Thread({
+        run() {
+            Thread_.sleep(60000);
+            while (thiz._isRunning) {
+                players = thiz._players;
+                players_ = Server.getAllPlayers();
+                for (let i = 0, len = players_.length; i < len; i++) {
+                    let uuid = Entity.getUniqueId(players_[i]);
+                    if (uuid in players) {
+                        File.write(PLAYERS_PATH + uuid, JSON.parse(players[uuid].toJSON()));
+                    }
+                }
+                Thread_.sleep(60000);
+            }
+        }
+    }).start();
+};
+
+System.prototype.isRunning = function () {
+    return this._isRunning;
+};
+
+System.prototype.save = function () {
+    let players = this._players,
+        players_ = Server.getAllPlayers();
+    for (let i = 0, len = players_.length; i < len; i++) {
+        let player = players_[i],
+            playerData = new PlayerData(player),
+            uuid = Entity.getUniqueId(player);
+        if (uuid in players) {
+            File.write(PLAYERS_PATH + uuid, JSON.parse(players[uuid].toJSON()));
+        }
+    }
+    return this;
+};
+
+System.prototype.stop = function () {
+    this._isRunning = false;
+    return this;
+};
+
+
+
+function Wallet(owner, money) {
     this._log = new WalletLog();
+    this._money = money || 0;
+    this._owner = owner || null;
 }
 
 Wallet.prototype.addMoney = function (money, reason) {
