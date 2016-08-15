@@ -356,6 +356,17 @@ Wallet.prototype.subtractMoney = function (money, reason) {
     return this;
 };
 
+Wallet.prototype.addMoney = function (money, reason) {
+    this._log.add({
+        type: WalletLog.ADD_MONEY,
+        lastValue: this._money,
+        value: money,
+        reason: reason || "None"
+    });
+    this._money += money;
+    return this;
+};
+
 
 
 function WalletLog() {
