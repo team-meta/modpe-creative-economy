@@ -64,6 +64,19 @@ Bank.TYPE_DAY = 1200000;
 Bank.TYPE_MONTH = 36000000;
 Bank.TYPE_YEAR = 432000000;
 
+Bank.prototype.deposit = function (money) {    
+    let wallet = system._players[owner].getWallet();    
+    if (wallet.getMoney() < money) {
+        return false;
+    }    
+    wallet.subtractMoney(money, "deposit");    
+    this._money += money;
+};
+
+Bank.prototype.getOwner = function () {    
+    return this._owner;
+};
+
 Bank.prototype.refresh = function () {    
     let now = java.lang.System.currentTimeMillis();    
     if (now - this._time > this._type) {        
@@ -71,31 +84,18 @@ Bank.prototype.refresh = function () {    
     }
 };
 
-Bank.prototype.addMoney = function (money) {    
-    let wallet = system._players[owner].getWallet();    
-    if (wallet.getMoney() < money) {
-        return false;
-    }    
-    wallet.subtractMoney(money, "은행 입금");    
-    this._money += money;
+Bank.prototype.setOwner = function (owner) {   
+    this._owner = owner;
+    return this;
 };
 
-Bank.prototype.subtractMoney = function (money) {    
+Bank.prototype.withdraw = function (money) {    
     let wallet = system._players[owner].getWallet();    
     if (this._money < money) {
         return false;
     }    
     this._money -= money;    
-    wallet.addMoney(money, "은행 출금");
-};
-
-Bank.prototype.getOwner = function () {    
-    return this._owner;
-};
-
-Bank.prototype.setOwner = function (owner) {   
-    this._owner = owner;
-    return this;
+    wallet.addMoney(money, "withdraw");
 };
 
 
@@ -256,7 +256,7 @@ PlayerData.prototype.deleteTerritory = function (territory) {
         let territory_ = territories[i],
             point1_ = territory_.getPoint1(),
             point2_ = territory_.getPoint2();
-        if (point1[0] === point1_[0] && point1[1] === point1_[1] && point1[2] === point1_[2] && point2[0] === point2_[0] && point2[1] === point2_[1] && point2[2] === point2_[2]) {
+        if (point1[0] === point1_[0] && point1[1] === point1_[1] && point2[0] === point2_[0] && point2[1] === point2_[1]) {
             territories.splice(i, 1);
         }
     }
@@ -400,16 +400,47 @@ System.prototype.stop = function () {
 
 
 
-function Territory(owner) {
+// 영토는 x, z 좌표만 지정함
+function Territory(owner, point1, point2) {
     this._owner = owner || null;
+    this._point1 = point1 || [];
+    this._point2 = point2 || [];
 }
 
-Territory.prototype.isInvaded = function (x, z) {
+Territory.prototype.getOwner = function () {
+    return this._owner;
+};
 
+Territory.prototype.getPoint1 = function () {
+    return this._point1;
+};
+
+Territory.prototype.getPoint2 = function () {
+    return this._point2;
+};
+
+Territory.prototype.isInvaded = function (x, z) {
+    // x, y가 영토안에 들어왔는지 체크
+    // 누가 만드셈
 };
 
 Territory.prototype.isOwner = function (entity) {
     return this._owner === entity;
+};
+
+Territory.prototype.setOwner = function (entity) {
+    this._owner = entity;
+    return this;
+};
+
+Territory.prototype.setPoint1 = function (x, z) {
+    this._point1 = [x, z];
+    return this;
+};
+
+Territory.prototype.setPoint2 = function (x, z) {
+    this._point2 = [x, z];
+    return this;
 };
 
 
