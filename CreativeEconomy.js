@@ -327,11 +327,22 @@ System.prototype.add = function (player) {
     }
 };
 
+System.prototype.canGetTerritory = function (territory, playerEntity) {
+    for (let playerData of this._players) {
+        let territories = playerData.getTerritories();
+        for (let i = 0, len = territories.length; i < len; i++) {
+            if (!territories[i].isOwner(playerEntity) && !territories[i].isOverlap(territory)) {
+                return false;
+            }
+        }
+    }
+    return true;
+};
+
 System.prototype.canSetBlock = function (x, z, playerEntity) {
-    let players = this._players;
-    for (let i = 0, len = players.length; i < len; i++) {
-        let territories = players[i].getTerritories();
-        for (let j = 0, len = territories.length; j < len; j++) {
+    for (let playerData of this._players) {
+        let territories = playerData.getTerritories();
+        for (let i = 0, len = territories.length; i < len; i++) {
             if (!territories[i].isOwner(playerEntity) && territories[i].isInvaded(x, z)) {
                 return false;
             }
@@ -341,9 +352,7 @@ System.prototype.canSetBlock = function (x, z, playerEntity) {
 };
 
 System.prototype.getPlayerByEntity = function (entity) {
-    let players = this._players;
-    for (let i = 0, len = players.length; i < len; i++) {
-        let playerData = players[i];
+    for (let playerData of this._players) {
         if (playerData.getEntity() === entity) {
             return playerData;
         }
@@ -429,8 +438,29 @@ Territory.prototype.getPoint2 = function () {
 };
 
 Territory.prototype.isInvaded = function (x, z) {
-    // x, z가 영토안에 들어왔는지 체크
-    // 누가 만드셈
+    let point1 = this._point1,
+        point2 = this._point2,
+        minX = Math.min(point1[0], point2[0]),
+        maxX = Math.min(point1[0], point2[0]),
+        minZ = Math.min(point1[1], point2[1]),
+        maxZ = Math.min(point1[1], point2[1]);
+    return (minX >= x || maxX <= x) && (minZ >= z || maxZ <= z);
+};
+
+Territory.prototype.isOverlap = function (territory) {
+    let point1 = this._point1,
+        point2 = this._point2,
+        point1_ = territory.getPoint1(),
+        point2_ = territory.getPoint2(),
+        minX = Math.min(point1[0], point2[0]),
+        maxX = Math.min(point1[0], point2[0]),
+        minZ = Math.min(point1[1], point2[1]),
+        maxZ = Math.min(point1[1], point2[1]),
+        minX_ = Math.min(point1_[0], point2_[0]),
+        maxX_ = Math.min(point1_[0], point2_[0]),
+        minZ_ = Math.min(point1_[1], point2_[1]),
+        maxZ_ = Math.min(point1_[1], point2_[1]);
+    return minX_ <= maxX && minX <= maxX_ && minZ_ <= maxZ && minZ <= maxZ_;
 };
 
 Territory.prototype.isOwner = function (entity) {
