@@ -19,7 +19,7 @@ let system,
 
 
 Server.getAllEntities = () => {
-    return Entity.getAll.filter(element => {
+    return Entity.getAll().filter(element => {
         return !Player.isPlayer(element);
     });
 };
