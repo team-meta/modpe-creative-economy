@@ -115,7 +115,7 @@ Command.FLAG_PLATER_SHORT = "@me";
 Command.prototype.run = function () {
     let params = this._params;
     if (params[0] in CommandList) {
-        CommandList[params[0]](...params.splice(1));
+        CommandList[params[0]].apply(null, params.splice(1));
     }
 };
 
@@ -311,6 +311,12 @@ PlayerData.prototype.toJSON = function () {
 
 function Preference() {
     this._pref = JSON.parse(File.read(PATH + "pref.json"));
+}
+
+
+
+function Shop(owner) {
+    this._owner = owner || null;
 }
 
 
